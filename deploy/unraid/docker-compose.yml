@@ -1,0 +1,31 @@
+# Watchtower — Unraid deployment (host: wolverine), via Compose Manager.
+#
+# Server-wide auto-updater. It polls the registry every 5 minutes and, for any
+# container labelled com.centurylinklabs.watchtower.enable=true, pulls a newer
+# image for the same tag and recreates the container with identical settings.
+# Everything else on the server is ignored (WATCHTOWER_LABEL_ENABLE).
+#
+# The image is built from the jonnymo5/watchtower fork by
+# .github/workflows/unraid-image.yaml — never from upstream's published images.
+# Watchtower is labelled too, so it updates itself when the fork's main moves.
+#
+# Setup + operations: see README.md in this directory.
+
+services:
+  watchtower:
+    image: ghcr.io/jonnymo5/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=America/Chicago
+      - WATCHTOWER_LABEL_ENABLE=true # only labelled containers are updated
+      - WATCHTOWER_POLL_INTERVAL=300 # seconds
+      - WATCHTOWER_CLEANUP=true # remove the old image after an update
+      - WATCHTOWER_UPDATE_ON_START=true # also check immediately on (re)start
+      # Optional: notify on updates/failures (shoutrrr URL, e.g. ntfy, Discord).
+      # Put the URL in .env next to this file rather than here.
+      # - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
+    labels:
+      - com.centurylinklabs.watchtower.enable=true # self-update from the fork
+    restart: unless-stopped
